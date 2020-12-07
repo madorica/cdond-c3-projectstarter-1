@@ -334,10 +334,10 @@ jobs:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
       - revert-migrations
 
-cleanup:
-    docker:
+  cleanup:
+     docker:
       - image: amazon/aws-cli
-    steps:
+     steps:
       - checkout
       - jq/install
       - run:
