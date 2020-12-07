@@ -13,7 +13,7 @@ commands:
           command: |
              aws cloudformation delete-stack --stack-name prod-frontend--<< parameters.workflow_id >>
              aws cloudformation delete-stack --stack-name prod-backend--<< parameters.workflow_id >>
-             aws s3 rb s3://udapeople-${CIRCLE_WORKFLOW_ID} --force
+             aws s3 rb s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --force
 #  revert-migrations:
 #    description: Revert the last migration if successfully run in the current workflow.
 #    parameters:
@@ -81,6 +81,9 @@ jobs:
               cd backend
               npm i
               npm run test
+        - save_cache:
+            paths: [frontend/node_modules]
+            key: frontend-test
 
   test-backend:
     docker:
@@ -88,14 +91,16 @@ jobs:
     steps:
         - checkout
         - restore_cache:
-            keys: [frontend-test]
+            keys: [backend-test]
         - run:
             name: Back-end test
             command: |
               cd backend
               npm i
               npm run test
-
+        - save_cache:
+            paths: [backend/node_modules]
+            key: backend-test
 
   scan-frontend:
     docker:
@@ -103,13 +108,16 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys: [frontend-analyze]
+          keys: [scan-frontend]
       - run:
           name: Front-end analyze
           command: |
             cd frontend
             npm i
             npm audit fix --audit-level=critical --force
+      - save_cache:
+          paths: [frontend/node_modules]
+          key: scan-frontend
 
   scan-backend:
     docker:
@@ -117,13 +125,16 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys: [backend-analyze]
+          keys: [scan-backend]
       - run:
           name: Back-end analyze
           command: |
             cd backend
             npm i
             npm audit fix --audit-level=critical --force
+      - save_cache:
+          paths: [frontend/node_modules]
+          key: scan-frontend
 
   deploy-infrastructure:
     docker:
@@ -135,31 +146,31 @@ jobs:
           command: |
             aws cloudformation deploy \
               --template-file .circleci/files/backend.yml \
-              --tags project=udacity-backend \
-              --stack-name prod-backend-${CIRCLE_WORKFLOW_ID} \
-              --parameter-overrides ID=${CIRCLE_WORKFLOW_ID}
+              --tags project=udacity \
+              --stack-name prod-backend-${CIRCLE_WORKFLOW_ID:0:7} \
+              --parameter-overrides ID=${CIRCLE_WORKFLOW_ID:0:7}
       - run:
           name: Ensure front-end infrastructure exist
           command: |
             aws cloudformation deploy \
               --template-file .circleci/files/frontend.yml \
-              --tags project=udacity-frontend \
-              --stack-name prod-frontend-${CIRCLE_WORKFLOW_ID} \
-              --parameter-overrides ID=${CIRCLE_WORKFLOW_ID}
+              --tags project=udacity \
+              --stack-name prod-frontend-${CIRCLE_WORKFLOW_ID:0:7} \
+              --parameter-overrides ID=${CIRCLE_WORKFLOW_ID:0:7}
       - run:
           name: Add back-end ip to ansible inventory
           command: |
             aws ec2 describe-instances \
                   --query 'Reservations[*].Instances[*].PublicIpAddress' \
-                  --filters "Name=tag:project,Values=udacity-backend" \
-                  --output text >> .circleci/ansible/inventory.txt
-            cat .circleci/ansible/inventory.txt
+                  --filters "Name=tag:Name,Values=prod-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+                  --output text >> ./.circleci/ansible/inventory.txt
+            cat ./.circleci/ansible/inventory.txt
       - persist_to_workspace:
           root: ~/
           paths:
             - project/.circleci/ansible/inventory.txt
       - destroy-environment:
-          workflow_id: ${CIRCLE_WORKFLOW_ID}
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
 
   configure-infrastructure:
     docker:
