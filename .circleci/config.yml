@@ -135,7 +135,7 @@ jobs:
               --template-file .circleci/files/backend.yml \
               --tags project=udacity-backend \
               --stack-name prod-backend-${CIRCLE_WORKFLOW_ID}
-              --parameter-overrides ID="anuarora"
+              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID}"
       - run:
           name: Ensure front-end infrastructure exist
           command: |
@@ -143,7 +143,7 @@ jobs:
               --template-file .circleci/files/frontend.yml \
               --tags project=udacity-frontend \
               --stack-name prod-frontend-${CIRCLE_WORKFLOW_ID}
-              --parameter-overrides ID="anuarora"
+              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID}"
       - run:
           name: Add back-end ip to ansible inventory
           command: |
