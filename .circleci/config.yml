@@ -1,17 +1,17 @@
 version: 2.1
 
-#commands:
-#  destroy-environment:
-#    description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
-#    parameters:
-#      # Add parameter here
-#    steps:
-#      - run:
-#          name: Destroy environments
-#          when: on_fail
-#          command: |
-#            # Your code here
-#            exit 1
+commands:
+  destroy-environment:
+    description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
+    parameters:
+      # Add parameter here
+    steps:
+      - run:
+          name: Destroy environments
+          when: on_fail
+          command: |
+             aws cloudformation delete-stack --stack-name prod-frontend-${CIRCLE_WORKFLOW_ID}
+             aws cloudformation delete-stack --stack-name prod-backend-${CIRCLE_WORKFLOW_ID}
 #  revert-migrations:
 #    description: Revert the last migration if successfully run in the current workflow.
 #    parameters:
@@ -155,7 +155,8 @@ jobs:
           root: ~/
           paths:
             - project/.circleci/ansible/inventory.txt
-      # Here's where you will add some code to rollback on failure
+      - destroy_environment
+        when: on_fail
 
 #  configure-infrastructure:
 #    docker:
@@ -164,7 +165,8 @@ jobs:
 #      - checkout
 #      - add_ssh_keys:
 #          fingerprints: ["38:17:30:1a:a5:58:aa:63:12:c3:2f:a8:d8:c8:1c:c1"]
-#      # attach workspace
+#      - attach_workspace:
+#            at: ~/
 #      - run:
 #          name: Install dependencies
 #          command: |
@@ -302,9 +304,9 @@ workflows:
           requires: [build-frontend]
       - deploy-infrastructure:
           requires: [test-frontend, test-backend, scan-frontend, scan-backend]
-          filters:
-            branches:
-              only: [test-feature-branch]
+#          filters:
+#            branches:
+#              only: [test-feature-branch]
 #      - configure-infrastructure:
 #          requires: [deploy-infrastructure]
 #      - run-migrations:
