@@ -13,6 +13,7 @@ commands:
           command: |
              aws cloudformation delete-stack --stack-name prod-frontend--<< parameters.workflow_id >>
              aws cloudformation delete-stack --stack-name prod-backend--<< parameters.workflow_id >>
+             aws s3 rb s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --force
   revert-migrations:
     description: Revert the last migration if successfully run in the current workflow.
     steps:
@@ -158,9 +159,9 @@ jobs:
           command: |
             aws ec2 describe-instances \
                   --query 'Reservations[*].Instances[*].PublicIpAddress' \
-                  --filters "Name=tag:Name,Values=prod-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
-                  --output text >> ./.circleci/ansible/inventory.txt
-            cat ./.circleci/ansible/inventory.txt
+                  --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+                  --output text >> .circleci/ansible/inventory.txt
+            cat .circleci/ansible/inventory.txt
       - persist_to_workspace:
           root: ~/
           paths:
@@ -222,7 +223,7 @@ jobs:
           name: Get backend url
           command: |
             export BACKEND_IP=$(aws ec2 describe-instances \
-              --filters "Name=tag:Name,Values=prod-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
               --query 'Reservations[*].Instances[*].PublicIpAddress' \
               --output text)
             export API_URL="http://${BACKEND_IP}:3030"
@@ -291,7 +292,7 @@ jobs:
           name: Backend url and smoke test.
           command: |
             BACKEND_IP=$(aws ec2 describe-instances \
-            --filters "Name=tag:Name, Values=prod-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+            --filters "Name=tag:Name, Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
             --query 'Reservations[*].Instances[*].PublicIpAddress' \
             --output text)
             curl "http://${BACKEND_IP}:3030/api/status"
