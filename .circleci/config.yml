@@ -86,7 +86,7 @@ jobs:
     steps:
         - checkout
         - restore_cache:
-            keys: [backend-test]
+            keys: [frontend-test]
         - run:
             name: Back-end test
             command: |
@@ -101,8 +101,9 @@ jobs:
     steps:
       - checkout
       - restore_cache:
+          keys: [frontend-analyze]
       - run:
-          name: Frontend-analyze
+          name: Front-end analyze
           command: |
             cd frontend
             npm i
@@ -114,8 +115,9 @@ jobs:
     steps:
       - checkout
       - restore_cache:
+          keys: [backend-analyze]
       - run:
-          name: Backend-analyze
+          name: Back-end analyze
           command: |
             cd backend
             npm i
