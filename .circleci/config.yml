@@ -27,7 +27,7 @@ commands:
             if ((success_migrations== true));
             then
               cd backend
-              npm install
+              npm i
               npm run migrations:revert
             fi
           when: on_fail
@@ -307,9 +307,9 @@ jobs:
             --output text)
             echo ${BACKEND_IP}
             curl "http://${BACKEND_IP}:3030/api/status"
-#      - destroy-environment:
-#          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
-#      - revert-migrations
+      - destroy-environment:
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+      - revert-migrations
       - run:
           name: Frontend smoke test.
           command: |
@@ -353,7 +353,9 @@ jobs:
       - run:
           name: Get old stack workflow id
           command: |
-            export OldWorkflowID=$(curl https://keyvalue.immanuel.co/api/KeyVal/GetValue/${STORE_TOKEN}/workflow_id | jq -r)
+            export OldWorkflowID=$(aws cloudformation \
+                list-exports --query "Exports[?Name==\`WorkflowID\`].Value" \
+                --no-paginate --output text)
             echo Old Workflow Id: "${OldWorkflowID}"
             echo Current Workflow Id: "${CIRCLE_WORKFLOW_ID:0:7}"
             if [ "${OldWorkflowID}" != "${CIRCLE_WORKFLOW_ID:0:7}" ]
